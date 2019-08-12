@@ -1,10 +1,11 @@
 import React from 'react';
+import JokeList from './jokeList/jokeList';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
-      Dad Jokes
+      <JokeList />
     </div>
   );
 }
