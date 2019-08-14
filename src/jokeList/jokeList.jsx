@@ -14,35 +14,69 @@ class JokeList extends Component {
 
   constructor(props) {
     super(props);
+    let savedData = JSON.parse(window.localStorage.getItem('jokes'));
+    if (savedData === null) {
+      savedData = [];
+    }
     this.state = {
-      jokes: []
+      jokes: savedData,
+      loading: false
     };
   }
 
-  async componentDidMount() {
-    let jokes = [];
+  componentDidMount() {
+    if (this.state.jokes.length === 0) {
+      this.loadJokes();
+    }
+  }
 
+  loadJokes = async () => {
+    let jokes = [];
     while (jokes.length < this.props.numJokesToGet) {
       const resp = await axios.get(API_URL, {
         headers: { Accept: 'application/json' }
       });
       jokes.push({ id: uuid(), text: resp.data.joke, votes: 0 });
     }
-    this.setState(st => ({
-      jokes: jokes
-    }));
-    console.log(jokes);
-  }
+    this.setState(
+      oldState => ({
+        jokes: [...oldState.jokes, ...jokes],
+        loading: false
+      }),
+      () => {
+        window.localStorage.setItem('jokes', JSON.stringify(this.state.jokes));
+      }
+    );
+  };
 
   handleVote = (id, delta) => {
-    this.setState(st => ({
-      jokes: st.jokes.map(j => {
-        return j.id === id ? { ...j, votes: j.votes + delta } : j;
-      })
-    }));
+    this.setState(
+      st => ({
+        jokes: st.jokes.map(j => {
+          return j.id === id ? { ...j, votes: j.votes + delta } : j;
+        })
+      }),
+      () => {
+        console.log(this.state.jokes);
+        window.localStorage.setItem('jokes', JSON.stringify(this.state.jokes));
+      }
+    );
+  };
+
+  handleLoadJokes = () => {
+    this.setState({ loading: true }, this.loadJokes);
   };
 
   render() {
+    if (this.state.loading) {
+      return (
+        <div className="jokeList-spinner">
+          <i className="far fa-8x fa-laugh fa-spin" />
+          <h1 className="jokeList-title">Loading...</h1>
+        </div>
+      );
+    }
+
     return (
       <div className="jokeList">
         <div className="jokeList-sidebar">
@@ -50,7 +84,9 @@ class JokeList extends Component {
             <span>Dad</span> Jokes!
           </h1>
           <img className="jokeList-img" src={happy} alt="Smile Emoji" />
-          <button className="jokeList-loadMore">New Jokes</button>
+          <button className="jokeList-loadMore" onClick={this.handleLoadJokes}>
+            New Jokes
+          </button>
         </div>
 
         <div className="jokeList-jokes">
@@ -64,6 +100,8 @@ class JokeList extends Component {
               downVote={() => this.handleVote(j.id, -1)}
             />
           ))}
+          {console.log(typeof this.state.jokes)}
+          {console.log(this.state.jokes.length)}
         </div>
       </div>
     );

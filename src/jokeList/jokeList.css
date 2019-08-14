@@ -1,7 +1,7 @@
 .jokeList {
   display: flex;
-  width: 80%;
-  height: 80%;
+  width: 90%;
+  height: 85%;
 }
 
 .jokeList-jokes {
@@ -39,11 +39,13 @@
   letter-spacing: 0;
 }
 
-.jokeList-loadMore {
-}
-
 .jokeList-img {
   width: 50%;
   border-radius: 50%;
   box-shadow: 0 19px 38px rgba(0, 0, 0, 0.3), 0 15px 12px rgba(0, 0, 0, 0.1);
+}
+
+.jokeList-spinner {
+  color: white;
+  text-align: center;
 }
