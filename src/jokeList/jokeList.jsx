@@ -22,6 +22,8 @@ class JokeList extends Component {
       jokes: savedData,
       loading: false
     };
+    this.seenJokes = new Set(this.state.jokes.map(j => j.text));
+    console.log(this.seenJokes);
   }
 
   componentDidMount() {
@@ -31,22 +33,35 @@ class JokeList extends Component {
   }
 
   loadJokes = async () => {
-    let jokes = [];
-    while (jokes.length < this.props.numJokesToGet) {
-      const resp = await axios.get(API_URL, {
-        headers: { Accept: 'application/json' }
-      });
-      jokes.push({ id: uuid(), text: resp.data.joke, votes: 0 });
-    }
-    this.setState(
-      oldState => ({
-        jokes: [...oldState.jokes, ...jokes],
-        loading: false
-      }),
-      () => {
-        window.localStorage.setItem('jokes', JSON.stringify(this.state.jokes));
+    try {
+      let jokes = [];
+      while (jokes.length < this.props.numJokesToGet) {
+        const resp = await axios.get(API_URL, {
+          headers: { Accept: 'application/json' }
+        });
+        const newJoke = resp.data.joke;
+        if (!this.seenJokes.has(newJoke)) {
+          jokes.push({ id: uuid(), text: newJoke, votes: 0 });
+        } else {
+          console.log('Found a duplicate :- ', newJoke);
+        }
       }
-    );
+      this.setState(
+        oldState => ({
+          jokes: [...oldState.jokes, ...jokes],
+          loading: false
+        }),
+        () => {
+          window.localStorage.setItem(
+            'jokes',
+            JSON.stringify(this.state.jokes)
+          );
+        }
+      );
+    } catch (error) {
+      alert(error);
+      this.setState({ loading: false });
+    }
   };
 
   handleVote = (id, delta) => {
@@ -77,6 +92,8 @@ class JokeList extends Component {
       );
     }
 
+    const sortedJokes = this.state.jokes.sort((a, b) => b.votes - a.votes);
+
     return (
       <div className="jokeList">
         <div className="jokeList-sidebar">
@@ -85,12 +102,11 @@ class JokeList extends Component {
           </h1>
           <img className="jokeList-img" src={happy} alt="Smile Emoji" />
           <button className="jokeList-loadMore" onClick={this.handleLoadJokes}>
-            New Jokes
+            Fetch Jokes
           </button>
         </div>
-
         <div className="jokeList-jokes">
-          {this.state.jokes.map(j => (
+          {sortedJokes.map(j => (
             <Joke
               key={j.id}
               id={j.id}
